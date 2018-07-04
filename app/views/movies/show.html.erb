@@ -3,3 +3,17 @@
 <p><%= @movie.description %></p>
 <%= link_to 'Edit', edit_movie_path(@movie) %> |
 <%= link_to 'Back', movies_path %>
+<hr></hr>
+<button class="btn btn-info like">좋아요</button>
+<script>
+//document가 다 준비된(load) 다음 동작해라 
+//html보다 js가 먼저 작동할 위험이 사라짐(항상 여기에 넣기)
+$(document).on('ready',function(){
+    $('.like').on('click', function(){  //클래스로 좋아요 버튼 찾기
+        console.log("like!!!"); 
+        $.ajax({
+           url: '/likes/<%= @movie.id %>' 
+        });
+    })  
+});  
+</script>

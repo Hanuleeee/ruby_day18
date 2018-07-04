@@ -1,4 +1,5 @@
 class MoviesController < ApplicationController
+  before_action :js_authenticate_user!, only: [:like_movie]
   before_action :authenticate_user!, except: [:index, :show]  # 둘 빼고 로그인한 유저만 보기가능
   before_action :set_movie, only: [:show, :edit, :update, :destroy]
 
@@ -61,6 +62,27 @@ class MoviesController < ApplicationController
       format.html { redirect_to movies_url, notice: 'Movie was successfully destroyed.' }
       format.json { head :no_content }
     end
+  end
+
+  def like_movie
+    p params
+    # 현재 유저와 params에 담긴 movie간의 좋아요 관계를 설정한다.
+    # 만약에 현재 로그인한 유저가 이미 좋아요를 눌렀을 경우-> 해당 Like 인스턴스 삭제
+    # 새로 누른 경우 -> 좋아요 관계 설정
+    @like = Like.where(user_id: current_user, movie_id: params[:movie_id]).first
+    if @like.nil?
+      @like = Like.create(user_id: current_user, movie_id: params[:movie_id])
+    else
+      @like.destroy
+    end
+    
+    # @like.frozen? # @like.destroy처럼 삭제된경우 에는 사용하지못하도록 얼어있어.
+    # -> true 라면 좋아요취소된친구
+    
+    # 현재 유저와 params에 담긴 movie간의 좋아요 관계를 설정한다.
+    # Like.create(user_id: current_user.id, movie_id: params[:movie_id])
+
+    puts "좋아요 설정 끝"
   end
 
   private
