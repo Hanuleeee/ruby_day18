@@ -22,6 +22,8 @@ $.ajax({
 * 처음 `show.html.erb` 에서 url, method, data 를 지정해주고, 이 요청을 받아드릴 `routes` 에 해당 url을 컨트롤러에 지정한다.
 * *movies_controller* 에서 좋아요, 좋아요 취소 로직을 설정했다.
 
+ 
+
 
 
 ## 좋아요 버튼 + 개수 넣고 변화하는 것
@@ -30,17 +32,77 @@ $.ajax({
 
 * `__.frozen?` : 이 메소드로 좋아요가 새로 만들어 진 것인지, 삭제를 한 건지 알 수 있다.
 
+ 
+
+*views/movies/show.html.erb*
+
+```erb
+...
+<% if @user_likes_movie.nil? %>
+<button class="btn btn-info like">좋아요 (<span class="like-count"><%=@movie.likes.count%></span>)</button>
+<% else %>
+<button class="btn btn-warning like text-white">좋아요 취소 (<span class="like-count"><%=@movie.likes.count%></span>)</button>
+<% end %>
+...
+<script>
+$(document).on('ready',function(){
+    $('.like').on('click', function(){  //클래스로 좋아요 버튼 찾기
+        console.log("like!!!"); 
+        $.ajax({
+           url: '/likes/<%= @movie.id %>' 
+        });
+    })  
+});
+</script>
+```
+
+ 
+
+*routes* 설정 :  `  get '/likes/:movie_id' => 'movies#like_movie'`
 
 
-//좋아요가 취소된 경우-
-//좋아요 취소버튼 -> 좋아요 버튼 
-//$('.like').text("좋아요").toggleClass("btn-info"); 
 
+*app/controllers/movies_controller.rb*
 
+```ruby
+  def like_movie
+    p params
+    # 현재 유저와 params에 담긴 movie간의 좋아요 관계를 설정한다.
+    # 만약에 현재 로그인한 유저가 이미 좋아요를 눌렀을 경우-> 해당 Like 인스턴스 삭제
+    # 새로 누른 경우 -> 좋아요 관계 설정
+    @like = Like.where(user_id: current_user.id, movie_id: params[:movie_id]).first
+    if @like.nil?
+      @like = Like.create(user_id: current_user.id, movie_id: params[:movie_id])
+    else
+      @like.destroy
+    end
+    puts @like.frozen? #이메소드로 새로만든건지, 삭제를 한건지 알수있다.
+    # @like.frozen? # @like.destroy처럼 삭제된경우 에는 사용하지못하도록 얼어있어.
+    # -> true 라면 좋아요취소된친구
+    puts "좋아요 설정 끝"
+  end
+```
 
-//좋아요가 새로 눌린경우
-//좋아요 버튼 -> 좋아요 취소 
-// $('.like').text("좋아요 취소").toggleClass("btn-warning btn-info text-white"); 
+ 
+
+*views/movies/like_movie.js.erb*
+
+```erb
+var like_count = parseInt($('.like-count').text());  //문자열이기때문에 숫자로 바꿔주어야 count가능
+
+console.log(like_count);
+if(<%= @like.frozen? %>){
+	//좋아요가 취소된 경우-  좋아요 취소버튼 -> 좋아요 버튼
+    alert("좋아요 취소");
+    like_count = like_count - 1;
+    $('.like').html(`좋아요( <span class='like-count'>${like_count}</span> )`).addClass("btn-info").removeClass("btn-warning text-white");
+} else {
+	//좋아요가 새로 눌린경우-  좋아요 버튼 -> 좋아요 취소 
+    alert("좋아요 설정됐쩡");
+    like_count = like_count + 1;
+    $('.like').html(`좋아요 취소( <span class='like-count'>${like_count}</span> )`).addClass("btn-warning text-white").removeClass("btn-info");
+}
+```
 
 
 
@@ -48,24 +110,24 @@ $.ajax({
 
 ` `` ` : 줄바꿈 O
 
+ 
 
+ 
 
+## 댓글 창 만들기
 
+ 
 
-* 댓글을 입력받을 폼을 작성
-* form(요소)이 제출(이벤트)될 때(이벤트 리스너)
-* form에 input(요소)안에 있는 내용물(메소드)을 받아서
-* ajax요청으로 서버에 '/create/comment'로 id값도 같이 보낸다.
-* 서버에서 저장하고, response 보내줄 js.erb 파일을 작성한다.
-* js.erb 파일에서는 댓글이 표시될 영역에 등록된 댓글의 내용을 추가해준다.
+- 댓글을 입력받을 폼을 작성
+- form(요소)이 제출(이벤트)될 때(이벤트 리스너)
+- form에 input(요소)안에 있는 내용물(메소드)을 받아서
+- ajax요청으로 서버에 '/create/comment'로 id값도 같이 보낸다.
+- 서버에서 저장하고, response 보내줄 js.erb 파일을 작성한다.
+- js.erb 파일에서는 댓글이 표시될 영역에 등록된 댓글의 내용을 추가해준다.
 
+ 
 
-
-
-
-## *comment model* 만들기
-
-
+### comment model 만들기 
 
 `$ rails g model comment`
 
@@ -203,7 +265,7 @@ before_action :set_movie, only: [:show, :edit, :update, :destroy, :create_commen
 
 ## 댓글 삭제버튼 만들기 & 동작
 
-
+  
 
 * 댓글에 있는 삭제 버튼(요소)을 누르면(이벤트 리스너) 
 
@@ -211,7 +273,7 @@ before_action :set_movie, only: [:show, :edit, :update, :destroy, :create_commen
 
   실제 DB에서도 삭제가 된다(ajax).
 
-  
+   
 
 *app/views/movies/show.html.erb*
 
@@ -310,7 +372,7 @@ alert("댓글이 등록되었습니다.");
 
 ## 수정버튼 만들기 + 동작
 
-
+  
 
 [이벤트 리스너 + 이벤트 핸들러]
 
@@ -320,7 +382,7 @@ alert("댓글이 등록되었습니다.");
 
 * 수정버튼은 확인 버튼으로 바뀐다.
 
-  
+   
 
 ### 수정버튼 추가
 
@@ -453,6 +515,7 @@ alert("댓글이 등록되었습니다.");
     end
 ...
 ```
+
 
 
 
