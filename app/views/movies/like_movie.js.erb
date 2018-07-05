@@ -1,11 +1,12 @@
-alert("좋아요 설정됐쩡");
+var like_count = parseInt($('.like-count').text());  //문자열이기때문에 숫자로 바꿔주어야 count가능
 
+console.log(like_count);
 if(<%= @like.frozen? %>){
-<!--좋아요가 취소된 경우
-    좋아요 취소버튼 -> 좋아요 버튼 -->
-    $('.like').text("좋아요").toggleClass("btn-info");
+    alert("좋아요 취소");
+    like_count = like_count - 1;
+    $('.like').html(`좋아요( <span class='like-count'>${like_count}</span> )`).addClass("btn-info").removeClass("btn-warning text-white");
 } else {
-<!--좋아요가 새로 눌린경우
-    좋아요 버튼 -> 좋아요 취소 -->
-    $('.like').text("좋아요 취소").toggleClass("btn-warning btn-info text-white");
+    alert("좋아요 설정됐쩡");
+    like_count = like_count + 1;
+    $('.like').html(`좋아요 취소( <span class='like-count'>${like_count}</span> )`).addClass("btn-warning text-white").removeClass("btn-info");
 }
